@@ -1,40 +1,43 @@
+import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import express from 'express';
-import cors from 'cors';
+import dotenv from 'dotenv';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 
+// Import local modules (Note the .js extensions are required in ESM)
 import db from './config/connection.js';
-import routes from './routes/index.js';
-import { typeDefs, resolvers } from './schemas/index.js';
 import { authMiddleware } from './utils/auth.js';
+import { typeDefs, resolvers } from './schemas/index.js';
 
+dotenv.config();
+
+// Define __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
 
-const server = new ApolloServer({ typeDefs, resolvers });
-
-const startServer = async () => {
+const startApolloServer = async () => {
   await server.start();
 
-  app.use(
-    '/graphql',
-    cors(),
-    express.json(),
-    expressMiddleware(server, { context: authMiddleware })
-  );
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
 
-  app.use(routes);
+  app.use('/graphql', expressMiddleware(server, {
+    context: authMiddleware,
+  }));
 
+  // Serve static assets in production
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/dist')));
+
     app.get('*', (req, res) => {
       res.sendFile(path.join(__dirname, '../client/dist/index.html'));
     });
@@ -47,4 +50,4 @@ const startServer = async () => {
   });
 };
 
-startServer();
+startApolloServer();

@@ -1,8 +1,6 @@
-const { Schema, model } = require('mongoose');
-const bcrypt = require('bcrypt');
-
-// import schema from Book.js
-const bookSchema = require('./Book');
+import { Schema, model } from 'mongoose';
+import bcrypt from 'bcrypt';
+import bookSchema from './Book.js';
 
 const userSchema = new Schema(
   {
@@ -54,4 +52,4 @@ userSchema.virtual('bookCount').get(function () {
 
 const User = model('User', userSchema);
 
-module.exports = User;
+export default User;
