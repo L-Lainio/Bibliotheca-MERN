@@ -9,6 +9,22 @@ const resolvers = {
       }
       return User.findById(context.user._id).select('-__v -password');
     },
+    searchBooks: async (_, { query }) => {
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=${query}`
+      );
+      const data = await response.json();
+      
+      // Map the Google data to match your GraphQL typeDefs
+      return data.items.map((book) => ({
+        bookId: book.id,
+        authors: book.volumeInfo.authors || ['No author to display'],
+        title: book.volumeInfo.title,
+        description: book.volumeInfo.description,
+        image: book.volumeInfo.imageLinks?.thumbnail || '',
+        link: book.volumeInfo.infoLink,
+      }));
+    },
   },
   Mutation: {
     addUser: async (parent, args) => {
